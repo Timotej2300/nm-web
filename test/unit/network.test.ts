@@ -1,9 +1,15 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   isFreshNetworkStatus,
   unavailableNetworkStatus,
 } from "@/lib/network-status";
 import { maintenanceRouteDecision } from "@/lib/maintenance-route-policy";
+import {
+  previewTestModeActive,
+  previewTestPermissionAllowed,
+} from "@/lib/auth/preview-test-policy";
+import { hasSameOrigin } from "@/lib/security/requests";
+import type { NextRequest } from "next/server";
 
 const now = Date.parse("2026-10-09T17:00:00.000Z");
 
@@ -88,3 +94,59 @@ describe("maintenance routing policy", () => {
     expect(maintenanceRouteDecision("/api/search", "unavailable")).toBe("service_unavailable");
   });
 });
+
+describe("preview-only admin permission simulation", () => {
+  const testUserId = "11111111-1111-4111-8111-111111111111";
+  const previewConfig = {
+    vercelEnv: "preview",
+    enabled: "true",
+    testUserId,
+  };
+
+  it("allows only the explicitly selected preview account and supported modules", () => {
+    expect(previewTestModeActive(previewConfig)).toBe(true);
+    expect(
+      previewTestPermissionAllowed(
+        testUserId,
+        "ninjamelonweb.tickets",
+        previewConfig,
+      ),
+    ).toBe(true);
+    expect(
+      previewTestPermissionAllowed(
+        "22222222-2222-4222-8222-222222222222",
+        "ninjamelonweb.staff",
+        previewConfig,
+      ),
+    ).toBe(false);
+    expect(
+      previewTestPermissionAllowed(
+        testUserId,
+        "ninjamelonweb.ranks",
+        previewConfig,
+      ),
+    ).toBe(false);
+  });
+
+  it("never enables the test permission path in production or without the flag", () => {
+    expect(previewTestModeActive({ ...previewConfig, vercelEnv: "production" })).toBe(false);
+    expect(previewTestModeActive({ ...previewConfig, enabled: "false" })).toBe(false);
+    expect(previewTestModeActive({ ...previewConfig, testUserId: "not-a-uuid" })).toBe(false);
+  });
+
+  it("accepts only active Vercel preview origins for same-origin writes", () => {
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://ninjamelon.cz");
+    vi.stubEnv("VERCEL_ENV", "preview");
+    vi.stubEnv("VERCEL_URL", "ninjamelon-git-test.vercel.app");
+    vi.stubEnv("VERCEL_BRANCH_URL", "ninjamelon-git-main.vercel.app");
+    const request = (origin: string) =>
+      ({ headers: new Headers({ origin }) }) as unknown as NextRequest;
+    expect(hasSameOrigin(request("https://ninjamelon-git-test.vercel.app"))).toBe(true);
+    expect(hasSameOrigin(request("https://ninjamelon-git-main.vercel.app"))).toBe(true);
+    expect(hasSameOrigin(request("https://attacker.vercel.app"))).toBe(false);
+    vi.stubEnv("VERCEL_ENV", "production");
+    expect(hasSameOrigin(request("https://ninjamelon-git-test.vercel.app"))).toBe(false);
+  });
+});
+
+afterEach(() => vi.unstubAllEnvs());

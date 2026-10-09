@@ -4,6 +4,7 @@ import { requestBridge, BridgeUnavailableError } from "@/lib/minecraft/bridge";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getMaintenanceState } from "@/lib/maintenance-state";
+import { previewTestPermissionAllowed } from "@/lib/auth/preview-test-policy";
 
 export const permissionNodes = [
   "ninjamelonweb.staff",
@@ -49,6 +50,17 @@ export async function checkCurrentPermission(
     return { allowed: false, reason: "not_signed_in" };
   const admin = createSupabaseAdminClient();
   if (!admin) return { allowed: false, reason: "bridge_unavailable" };
+  if (
+    previewTestPermissionAllowed(
+      userResult.user.id,
+      permission,
+      {
+        vercelEnv: process.env.VERCEL_ENV,
+        enabled: process.env.NINJAMELON_PREVIEW_TEST_MODE,
+        testUserId: process.env.NINJAMELON_PREVIEW_TEST_USER_ID,
+      },
+    )
+  ) return { allowed: true, reason: "allowed" };
   const { data: profile, error: profileError } = await admin
     .from("profiles")
     .select("minecraft_uuid")

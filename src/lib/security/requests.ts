@@ -15,9 +15,26 @@ export class RequestError extends Error {
 export function hasSameOrigin(request: NextRequest): boolean {
   const origin = request.headers.get("origin");
   const configured = process.env.NEXT_PUBLIC_SITE_URL;
-  if (!origin || !configured) return false;
+  if (!origin) return false;
   try {
-    return new URL(origin).origin === new URL(configured).origin;
+    const requestOrigin = new URL(origin).origin;
+    const allowedOrigins = new Set<string>();
+    if (configured) allowedOrigins.add(new URL(configured).origin);
+    const previewHosts = [
+      process.env.VERCEL_URL,
+      process.env.VERCEL_BRANCH_URL,
+    ];
+    if (process.env.VERCEL_ENV === "preview") {
+      for (const previewHost of previewHosts) {
+        if (
+          previewHost &&
+          /^[a-z0-9][a-z0-9.-]*\.vercel\.app$/i.test(previewHost)
+        ) {
+          allowedOrigins.add(`https://${previewHost.toLowerCase()}`);
+        }
+      }
+    }
+    return allowedOrigins.has(requestOrigin);
   } catch {
     return false;
   }

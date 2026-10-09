@@ -22,6 +22,7 @@ Apply the migrations to a disposable Supabase staging project first. Confirm the
 - Public search queries only published news, listed public team data and visible forum topics. It has no path to tickets, recruitment responses, notifications or audit records.
 - News and managed-page writes use permission-checked server routes and audited database functions. Audit viewing is limited to `ninjamelonweb.audit`. Markdown renders through a sanitizer; it is not trusted HTML.
 - The maintenance flag is stored in `site_settings`, written only through an audited service-role RPC, and checked on page/API requests. Public pages redirect to the maintenance page and public APIs return `503`; admin APIs must still pass staff, section and active maintenance LuckPerms checks. The saved state is cached briefly (up to three seconds per instance).
+- A deliberately opt-in admin permission simulation exists only when the deployment platform reports `VERCEL_ENV=preview`, `NINJAMELON_PREVIEW_TEST_MODE=true`, and the authenticated Supabase user UUID exactly matches the configured test UUID. It is allowlisted to implemented admin nodes, shows a persistent TEST MODE banner, and never simulates bridge/network health. This does not test or replace real LuckPerms authorization; never set the flag in Production.
 - `service_role` bypasses RLS. It is a root credential: server-only, rotated, absent from logs and never returned to clients.
 
 ## Abuse protection and limits

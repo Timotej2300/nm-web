@@ -30,6 +30,17 @@ The repository has `vercel.json` for the Next.js framework and an Actions workfl
 
 To deploy, publish this source to a GitHub repository, import that repository into Vercel, keep the project root as the root directory, and set the listed production environment variables in Vercel Project Settings. Use separate Supabase/Upstash credentials for Preview and Production. No GitHub remote, Vercel project or automatic deployment is connected from this workspace.
 
+### Preview-only admin test without Velocity
+
+For a non-production Vercel Preview deployment only, create a test user in a separate Supabase staging project and set these two variables for the Vercel **Preview** environment:
+
+- `NINJAMELON_PREVIEW_TEST_MODE=true`
+- `NINJAMELON_PREVIEW_TEST_USER_ID=<that Supabase Auth user's UUID>`
+
+Vercel supplies `VERCEL_ENV=preview`; do not create or override that system variable. Same-origin checks accept the active Preview deployment and branch URLs supplied by Vercel. The preview test path applies only to that exact UUID and an allowlist of implemented admin nodes, and displays a TEST MODE banner. It bypasses **only the LuckPerms permission check** for that test user; Supabase data, writes, rate limits and audit rows are still real. Network/bridge health continues to show unavailable. The `ninjamelonweb.ranks` node is not simulated.
+
+Never set preview test mode for Production. For realistic authorization testing, use a staging Velocity/LuckPerms server instead. This simulation does not prove that production LuckPerms, bridge signatures, or server permissions work.
+
 ## 1.2 Supabase
 
 The application uses `@supabase/ssr` for cookie-based Auth and the server-only Supabase client for restricted RPC calls. Apply `supabase/migrations/*.sql` in filename order to a disposable staging project first. Do not treat the local PGlite tests as proof that Supabase Auth grants, Storage policies, backups or production data have been verified. Configure Auth with public signup disabled and verify the environment-variable mapping above before enabling production writes.

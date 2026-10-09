@@ -16,9 +16,11 @@ const items = [
 
 export function AdminShell({
   locale,
+  previewTestMode,
   children,
 }: {
   locale: Locale;
+  previewTestMode: boolean;
   children: React.ReactNode;
 }) {
   return (
@@ -47,6 +49,13 @@ export function AdminShell({
           <span>SECURE WORKSPACE</span>
           <span>{locale.toUpperCase()}</span>
         </header>
+        {previewTestMode && (
+          <div className="admin-preview-test-banner" role="status">
+            {locale === "sk"
+              ? "TEST MODE · Vercel Preview · LuckPerms oprávnenia sú simulované iba pre určený testovací účet. Stav bridge-u a herného servera sa nesimuluje."
+              : "TEST MODE · Vercel Preview · Oprávnění LuckPerms jsou simulována pouze pro určený testovací účet. Stav bridge a herního serveru se nesimuluje."}
+          </div>
+        )}
         <main id="main" className="admin-content">
           {children}
         </main>

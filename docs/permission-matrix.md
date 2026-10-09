@@ -19,3 +19,5 @@ Permission checks are server-side, live, and fail-closed. Web/database roles are
 | `ninjamelonweb.audit` | Read-only audit viewer | Implemented; server rechecks the live node and returns the latest 100 safe audit events. |
 
 Every protected write route must call the appropriate node again; a visible link or frontend role is not authorization. On bridge timeout, stale timestamp, invalid signature, replay, missing UUID or unknown node, the operation is denied. Dashboard/news/pages/team/forum/tickets/recruitment/audit and maintenance are wired; rank changes and general global settings remain disabled rather than simulated.
+
+For UI testing only, an opt-in Vercel Preview permission simulation is available for one explicitly configured Supabase Auth UUID. It never runs when `VERCEL_ENV` is `production`, does not simulate network health, and is not evidence that a production LuckPerms assignment is correct. See [`deployment.md`](deployment.md).
