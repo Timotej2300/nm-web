@@ -1,0 +1,8 @@
+name: NinjaMelonWebBridgePaper
+version: 0.1.0
+main: cz.ninjamelon.bridge.paper.NinjaMelonPaperPlugin
+api-version: '1.21'
+load: STARTUP
+description: Signed Paper heartbeat adapter for NinjaMelonWebBridge
+softdepend:
+  - LuckPerms
